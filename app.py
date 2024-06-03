@@ -45,6 +45,7 @@ def identity_handler():
 						link_prcd = row[4]
 						if link_prcd == "primary":
 							consolidated_resp["contact"]["primaryContactId"] = contact_id
+							# process all records with linked_id as the contact_id of the current record
 							rows_with_same_linked_id_query = "SELECT * FROM contact WHERE linked_id = (%s);" % (contact_id)
 							rows_with_same_linked_id_resp = conn.execute(text(rows_with_same_linked_id_query))
 							conn.commit()
@@ -74,6 +75,21 @@ def identity_handler():
 									consolidated_resp["contact"]["emails"].append(pr_email) # add to resp.
 								if pr_phone_number != "null" and pr_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
 									consolidated_resp["contact"]["phoneNumbers"].append(pr_phone_number) # add to resp.
+							# process all records with same linked_id as current record
+							rows_with_same_linked_id_query = "SELECT * FROM contact WHERE linked_id = (%s);" % (linked_id)
+							rows_with_same_linked_id_resp = conn.execute(text(rows_with_same_linked_id_query))
+							conn.commit()
+							rows_with_same_linked_id_resp_records = rows_with_same_linked_id_resp.fetchall()
+							for recd in rows_with_same_linked_id_resp_records:
+								recd_contact_id = recd[0]
+								recd_phone_number = recd[1]
+								recd_email = recd[2]
+								if recd_phone_number != "null" and recd_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
+									consolidated_resp["contact"]["phoneNumbers"].append(recd_phone_number) # add to resp.
+								if recd_email != "null" and recd_email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
+									consolidated_resp["contact"]["emails"].append(recd_email) # add to resp.
+								if recd_contact_id not in consolidated_resp["contact"]["secondaryContactIds"]:
+									consolidated_resp["contact"]["secondaryContactIds"].append(recd_contact_id)
 						if email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
 							consolidated_resp["contact"]["emails"].append(email) # add to resp.
 						if phone_number != "null" and phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
@@ -102,6 +118,7 @@ def identity_handler():
 						link_prcd = row[4]
 						if link_prcd == "primary":
 							consolidated_resp["contact"]["primaryContactId"] = contact_id
+							# process all records with linked_id as the contact_id of the current record
 							rows_with_same_linked_id_query = "SELECT * FROM contact WHERE linked_id = (%s);" % (contact_id)
 							rows_with_same_linked_id_resp = conn.execute(text(rows_with_same_linked_id_query))
 							conn.commit()
@@ -131,6 +148,21 @@ def identity_handler():
 									consolidated_resp["contact"]["emails"].append(pr_email) # add to resp.
 								if pr_phone_number != "null" and pr_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
 									consolidated_resp["contact"]["phoneNumbers"].append(pr_phone_number) # add to resp.
+							# process all records with same linked_id as current record
+							rows_with_same_linked_id_query = "SELECT * FROM contact WHERE linked_id = (%s);" % (linked_id)
+							rows_with_same_linked_id_resp = conn.execute(text(rows_with_same_linked_id_query))
+							conn.commit()
+							rows_with_same_linked_id_resp_records = rows_with_same_linked_id_resp.fetchall()
+							for recd in rows_with_same_linked_id_resp_records:
+								recd_contact_id = recd[0]
+								recd_phone_number = recd[1]
+								recd_email = recd[2]
+								if recd_email != "null" and recd_email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
+									consolidated_resp["contact"]["emails"].append(recd_email) # add to resp.
+								if recd_phone_number != "null" and recd_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
+									consolidated_resp["contact"]["phoneNumbers"].append(recd_phone_number) # add to resp.
+								if recd_contact_id not in consolidated_resp["contact"]["secondaryContactIds"]:
+									consolidated_resp["contact"]["secondaryContactIds"].append(recd_contact_id)
 						if phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
 							consolidated_resp["contact"]["phoneNumbers"].append(phone_number) # add to resp.
 						if email != "null" and email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
@@ -179,9 +211,9 @@ def identity_handler():
 				print(f"SQLAlchemyError: {e}")
 			close_db_connection()
 
-		# phone_mumber is unseen and email is null, create a new primary record 
- 		if email_inpt == "null" and inpt_phone_number_not_present_flag == True:
-			# insert new primary record
+		# phone_number is unseen and email is null, create a new primary record 
+		if email_inpt == "null" and inpt_phone_number_not_present_flag == True:
+ 			# insert new primary record
 			conn = get_db_connection()
 			insert_query = "INSERT INTO contact(phone_number, email, linked_id, link_precedence, created_at, updated_at, deleted_at) VALUES(('%s'), null, null, 'primary', ('%s'), ('%s'), null);" % (phone_number_inpt, datetime.now(), datetime.now())
 			try:
@@ -198,14 +230,11 @@ def identity_handler():
 			close_db_connection()
 
  		# only email is unseen, create a secondary record & update consolidated record
- 		if inpt_email_not_present_flag == True and inpt_phone_number_not_present_flag == False:
- 			# insert a new secondary record
- 			conn = get_db_connection()
- 			try:
- 				get_linked_id_query = "SELECT * FROM contact WHERE phone_number = ('%s') AND link_precedence = 'primary';" % (phone_number_inpt)
- 				resp = conn.execute(text(get_linked_id_query))
- 				conn.commit()
- 				linked_id = resp.fetchone()[0]
+		if inpt_email_not_present_flag == True and inpt_phone_number_not_present_flag == False:
+			# insert a new secondary record
+			conn = get_db_connection()
+			try:
+				linked_id = consolidated_resp["contact"]["primaryContactId"]
 				insert_query = "INSERT INTO contact(phone_number, email, linked_id, link_precedence, created_at, updated_at, deleted_at) VALUES(('%s'), ('%s'), (%s), 'secondary', ('%s'), ('%s'), null);" % (phone_number_inpt, email_inpt, linked_id, datetime.now(), datetime.now())
 				conn.execute(text(insert_query))
 				conn.commit()
@@ -221,16 +250,12 @@ def identity_handler():
 				print(f"SQLAlchemyError: {e}")
 			close_db_connection()
 
-
- 		# only phone_number is unseen, create a secondary record
- 		if inpt_phone_number_not_present_flag == True and inpt_email_not_present_flag == False:
- 			# insert a new secondary record
- 			conn = get_db_connection()
- 			try:
- 				get_linked_id_query = "SELECT * FROM contact WHERE email = ('%s') AND link_precedence = 'primary';" % (email_inpt)
- 				resp = conn.execute(text(get_linked_id_query))
- 				conn.commit()
- 				linked_id = resp.fetchone()[0]
+		# only phone_number is unseen, create a secondary record
+		if inpt_phone_number_not_present_flag == True and inpt_email_not_present_flag == False:
+		# insert a new secondary record
+			conn = get_db_connection()
+			try:
+				linked_id = consolidated_resp["contact"]["primaryContactId"]
 				insert_query = "INSERT INTO contact(phone_number, email, linked_id, link_precedence, created_at, updated_at, deleted_at) VALUES(('%s'), ('%s'), (%s), 'secondary', ('%s'), ('%s'), null);" % (phone_number_inpt, email_inpt, linked_id, datetime.now(), datetime.now())
 				conn.execute(text(insert_query))
 				conn.commit()
@@ -245,6 +270,6 @@ def identity_handler():
 			except SQLAlchemyError as e:
 				print(f"SQLAlchemyError: {e}")
 			close_db_connection()
-
+		
 		consolidated_resp_json = json.dumps(consolidated_resp, indent=4)
 		return consolidated_resp_json
