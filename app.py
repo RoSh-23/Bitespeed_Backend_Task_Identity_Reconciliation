@@ -12,9 +12,8 @@ def identity_handler():
 	if request.method == "POST":
 		# get the data posted in the HTTP POST request
 		post_data = request.get_json()
-		email_inpt = str(post_data["email"])
-		phone_number_inpt = str(post_data["phoneNumber"])
-
+		email_inpt = post_data["email"]
+		phone_number_inpt = post_data["phoneNumber"]
 		# prepare the consolidated response
 		consolidated_resp = {
 			"contact": {
@@ -29,7 +28,7 @@ def identity_handler():
 		inpt_phone_number_not_present_flag = False
 
 		# process of converting primary records into secondary, if required
-		if email_inpt != "null" and phone_number_inpt != "null":
+		if email_inpt is not None and phone_number_inpt is not None:
 			conn = get_db_connection()
 			try:
 				# find the primary record ids associated with the email and phone number
@@ -90,7 +89,7 @@ def identity_handler():
 			close_db_connection()
 
 		# process email input
-		if email_inpt != "null":
+		if email_inpt is not None:
 			conn = get_db_connection()
 			query = "SELECT * FROM contact WHERE email = ('%s');" % (email_inpt)
 			try:
@@ -115,9 +114,9 @@ def identity_handler():
 								recd_contact_id = recd[0]
 								recd_phone_number = recd[1]
 								recd_email = recd[2]
-								if recd_phone_number != "null" and recd_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
+								if recd_phone_number is not None and recd_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
 									consolidated_resp["contact"]["phoneNumbers"].append(recd_phone_number) # add to resp.
-								if recd_email != "null" and recd_email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
+								if recd_email is not None and recd_email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
 									consolidated_resp["contact"]["emails"].append(recd_email) # add to resp.
 								if recd_contact_id not in consolidated_resp["contact"]["secondaryContactIds"]:
 									consolidated_resp["contact"]["secondaryContactIds"].append(recd_contact_id)
@@ -132,9 +131,9 @@ def identity_handler():
 								get_primary_recd_resp_row = get_primary_recd_resp.fetchone()
 								pr_phone_number = get_primary_recd_resp_row[1]
 								pr_email = get_primary_recd_resp_row[2]
-								if pr_email != "null" and pr_email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
+								if pr_email is not None and pr_email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
 									consolidated_resp["contact"]["emails"].append(pr_email) # add to resp.
-								if pr_phone_number != "null" and pr_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
+								if pr_phone_number is not None and pr_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
 									consolidated_resp["contact"]["phoneNumbers"].append(pr_phone_number) # add to resp.
 							# process all records with same linked_id as current record
 							rows_with_same_linked_id_query = "SELECT * FROM contact WHERE linked_id = (%s);" % (linked_id)
@@ -145,15 +144,15 @@ def identity_handler():
 								recd_contact_id = recd[0]
 								recd_phone_number = recd[1]
 								recd_email = recd[2]
-								if recd_phone_number != "null" and recd_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
+								if recd_phone_number is not None and recd_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
 									consolidated_resp["contact"]["phoneNumbers"].append(recd_phone_number) # add to resp.
-								if recd_email != "null" and recd_email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
+								if recd_email is not None and recd_email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
 									consolidated_resp["contact"]["emails"].append(recd_email) # add to resp.
 								if recd_contact_id not in consolidated_resp["contact"]["secondaryContactIds"]:
 									consolidated_resp["contact"]["secondaryContactIds"].append(recd_contact_id)
 						if email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
 							consolidated_resp["contact"]["emails"].append(email) # add to resp.
-						if phone_number != "null" and phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
+						if phone_number is not None and phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
 							consolidated_resp["contact"]["phoneNumbers"].append(phone_number) # add to resp.
 				else:
 					# the email recv. in request is not present in the database
@@ -163,7 +162,7 @@ def identity_handler():
 			close_db_connection()
 
 		# process the phone number input
-		if phone_number_inpt != "null":
+		if phone_number_inpt is not None:
 			conn = get_db_connection()
 			query = "SELECT * FROM contact WHERE phone_number = ('%s');" % (phone_number_inpt)
 			try:
@@ -188,9 +187,9 @@ def identity_handler():
 								recd_contact_id = recd[0]
 								recd_phone_number = recd[1]
 								recd_email = recd[2]
-								if recd_email != "null" and recd_email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
+								if recd_email is not None and recd_email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
 									consolidated_resp["contact"]["emails"].append(recd_email) # add to resp.
-								if recd_phone_number != "null" and recd_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
+								if recd_phone_number is not None and recd_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
 									consolidated_resp["contact"]["phoneNumbers"].append(recd_phone_number) # add to resp.
 								if recd_contact_id not in consolidated_resp["contact"]["secondaryContactIds"]:
 									consolidated_resp["contact"]["secondaryContactIds"].append(recd_contact_id)
@@ -205,9 +204,9 @@ def identity_handler():
 								get_primary_recd_resp_row = get_primary_recd_resp.fetchone()
 								pr_phone_number = get_primary_recd_resp_row[1]
 								pr_email = get_primary_recd_resp_row[2]
-								if pr_email != "null" and pr_email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
+								if pr_email is not None and pr_email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
 									consolidated_resp["contact"]["emails"].append(pr_email) # add to resp.
-								if pr_phone_number != "null" and pr_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
+								if pr_phone_number is not None and pr_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
 									consolidated_resp["contact"]["phoneNumbers"].append(pr_phone_number) # add to resp.
 							# process all records with same linked_id as current record
 							rows_with_same_linked_id_query = "SELECT * FROM contact WHERE linked_id = (%s);" % (linked_id)
@@ -218,15 +217,15 @@ def identity_handler():
 								recd_contact_id = recd[0]
 								recd_phone_number = recd[1]
 								recd_email = recd[2]
-								if recd_email != "null" and recd_email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
+								if recd_email is not None and recd_email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
 									consolidated_resp["contact"]["emails"].append(recd_email) # add to resp.
-								if recd_phone_number != "null" and recd_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
+								if recd_phone_number is not None and recd_phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
 									consolidated_resp["contact"]["phoneNumbers"].append(recd_phone_number) # add to resp.
 								if recd_contact_id not in consolidated_resp["contact"]["secondaryContactIds"]:
 									consolidated_resp["contact"]["secondaryContactIds"].append(recd_contact_id)
 						if phone_number not in consolidated_resp["contact"]["phoneNumbers"]: # check if phone_number is not already present
 							consolidated_resp["contact"]["phoneNumbers"].append(phone_number) # add to resp.
-						if email != "null" and email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
+						if email is not None and email not in consolidated_resp["contact"]["emails"]: # check if email is not already present
 							consolidated_resp["contact"]["emails"].append(email) # add to resp.
 				else:
 					# the phone_number recv. in request is not present in the database
@@ -255,7 +254,7 @@ def identity_handler():
 			close_db_connection()
 
 		# email is unseen and phone_number is null, create a new primary record
-		if phone_number_inpt == "null" and inpt_email_not_present_flag == True:
+		if phone_number_inpt == None and inpt_email_not_present_flag == True:
 			# insert new primary record
 			conn = get_db_connection()
 			insert_query = "INSERT INTO contact(phone_number, email, linked_id, link_precedence, created_at, updated_at, deleted_at) VALUES(null, ('%s'), null, 'primary', ('%s'), ('%s'), null);" % (email_inpt, datetime.now(), datetime.now())
@@ -273,7 +272,7 @@ def identity_handler():
 			close_db_connection()
 
 		# phone_number is unseen and email is null, create a new primary record 
-		if email_inpt == "null" and inpt_phone_number_not_present_flag == True:
+		if email_inpt == None and inpt_phone_number_not_present_flag == True:
  			# insert new primary record
 			conn = get_db_connection()
 			insert_query = "INSERT INTO contact(phone_number, email, linked_id, link_precedence, created_at, updated_at, deleted_at) VALUES(('%s'), null, null, 'primary', ('%s'), ('%s'), null);" % (phone_number_inpt, datetime.now(), datetime.now())
@@ -291,7 +290,7 @@ def identity_handler():
 			close_db_connection()
 
  		# only email is unseen, create a secondary record & update consolidated record
-		if inpt_email_not_present_flag == True and inpt_phone_number_not_present_flag == False:
+		if inpt_email_not_present_flag == True and inpt_phone_number_not_present_flag == False and phone_number_inpt is not None:
 			# insert a new secondary record
 			conn = get_db_connection()
 			try:
@@ -312,7 +311,7 @@ def identity_handler():
 			close_db_connection()
 
 		# only phone_number is unseen, create a secondary record
-		if inpt_phone_number_not_present_flag == True and inpt_email_not_present_flag == False:
+		if inpt_phone_number_not_present_flag == True and inpt_email_not_present_flag == False and email_inpt is not None:
 		# insert a new secondary record
 			conn = get_db_connection()
 			try:
