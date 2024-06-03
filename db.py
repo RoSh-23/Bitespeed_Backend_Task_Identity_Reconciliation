@@ -10,7 +10,7 @@ database_name = 'bitespeed_problem_db'
 
 def get_db_connection():
     # Create a connection string
-    connection_string = f'mysql+mysqlconnector://' + username + \
+    connection_string = f'postgresql+psycopg2://' + username + \
         ':' + password + '@' + hostname + '/' + database_name
     # create engine
     try:
