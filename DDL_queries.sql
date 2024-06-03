@@ -1,5 +1,5 @@
 CREATE TABLE contact(
-	id INT,
+	id INT AUTO_INCREMENT,
 	phone_number VARCHAR(30),
 	email VARCHAR(100),
 	linked_id INT,
@@ -10,3 +10,5 @@ CREATE TABLE contact(
 	PRIMARY KEY (id),
 	CHECK (link_precedence IN ("primary", "secondary"))
 );
+
+ALTER TABLE contact ADD CONSTRAINT UNIQUE(email, phone_number);
