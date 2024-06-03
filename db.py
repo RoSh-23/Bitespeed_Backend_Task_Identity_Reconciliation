@@ -15,16 +15,14 @@ def get_db_connection():
     # create engine
     try:
         engine = create_engine(connection_string)
-    except SQLAlchemyError:
-        print("SQLAlchemyError")
-        
-    if 'db_connection' not in g:
-        # create connection
-        g.db_connection = engine.connect()
+        if 'db_connection' not in g:
+            # create connection
+            g.db_connection = engine.connect()
+    except SQLAlchemyError as e:
+        print(f"SQLAlchemyError: {e}")
 
     # return the connection
     return g.db_connection
-
 
 def close_db_connection(e=None):
     db_connection = g.pop('db_connection', None)
