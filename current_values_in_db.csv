@@ -1,0 +1,12 @@
+"id","phone_number","email","linked_id","link_precedence","created_at","updated_at","deleted_at"
+1,"123456","lorraine@hillvalley.edu",NULL,"primary","2023-04-01 00:00:00","2023-04-01 00:00:00",NULL
+2,"123456","mcfly@hillvalley.edu",1,"secondary","2023-04-20 00:00:00","2023-04-20 00:00:00",NULL
+5,NULL,"deepika@hillvalley.edu",NULL,"primary","2024-06-03 21:36:53.493651","2024-06-03 21:36:53.493665",NULL
+6,"34899","deepika@hillvalley.edu",5,"secondary","2024-06-03 21:37:54.68868","2024-06-03 21:37:54.688701",NULL
+7,"345678","deepika@hillvalley.edu",5,"secondary","2024-06-03 21:38:22.014429","2024-06-03 21:38:22.014465",NULL
+4,"234567","rakesh@hillvalley.edu",5,"secondary","2024-06-03 21:27:30.987484","2024-06-03 21:27:30.9875",NULL
+3,"234567","rohan@hillvalley.edu",5,"secondary","2024-06-03 21:25:59.795842","2024-06-03 21:25:59.795866",NULL
+8,"888869","lakshmi@hillvalley.edu",NULL,"primary","2024-06-03 21:40:19.800184","2024-06-03 21:40:19.800203",NULL
+9,"534566","lakshmi@hillvalley.edu",8,"secondary","2024-06-03 21:40:57.880688","2024-06-03 21:40:57.88071",NULL
+10,"534566","roshni@hillvalley.edu",8,"secondary","2024-06-03 21:41:13.99476","2024-06-03 21:41:13.99478",NULL
+11,"89978554","nagendran@hillvalley.edu",NULL,"primary","2024-06-03 21:41:39.704363","2024-06-03 21:41:39.704376",NULL
