@@ -144,7 +144,7 @@ def identity_handler():
 
 		# both email and phone_number not present in the database, create a new primary record
 		if inpt_email_not_present_flag == True and inpt_phone_number_not_present_flag == True:
-			# insert new record
+			# insert new primary record
 			conn = get_db_connection()
 			insert_query = "INSERT INTO contact(phone_number, email, linked_id, link_precedence, created_at, updated_at, deleted_at) VALUES(('%s'), ('%s'), null, 'primary', ('%s'), ('%s'), null);" % (phone_number_inpt, email_inpt, datetime.now(), datetime.now())
 			try:
@@ -160,6 +160,48 @@ def identity_handler():
 			except SQLAlchemyError as e:
 				print(f"SQLAlchemyError: {e}")
 			close_db_connection()
- 
+
+		# email is unseen and phone_number is null, create a new primary record
+		if phone_number_inpt == "null" and inpt_email_not_present_flag == True:
+			# insert new primary record
+			conn = get_db_connection()
+			insert_query = "INSERT INTO contact(phone_number, email, linked_id, link_precedence, created_at, updated_at, deleted_at) VALUES(null, ('%s'), null, 'primary', ('%s'), ('%s'), null);" % (email_inpt, datetime.now(), datetime.now())
+			try:
+				conn.execute(text(insert_query))
+				conn.commit()
+				get_newly_inserted_recd_query = "SELECT * FROM contact WHERE email = ('%s');" % (email_inpt)
+				resp = conn.execute(text(get_newly_inserted_recd_query))
+				conn.commit()
+				resp_row = resp.fetchone()
+				consolidated_resp["contact"]["primaryContactId"] = resp_row[0]
+				consolidated_resp["contact"]["emails"].append(resp_row[2])
+			except SQLAlchemyError as e:
+				print(f"SQLAlchemyError: {e}")
+			close_db_connection()
+
+		# phone_mumber is unseen and email is null, create a new primary record 
+ 		if email_inpt == "null" and inpt_phone_number_not_present_flag == True:
+			# insert new primary record
+			conn = get_db_connection()
+			insert_query = "INSERT INTO contact(phone_number, email, linked_id, link_precedence, created_at, updated_at, deleted_at) VALUES(('%s'), null, null, 'primary', ('%s'), ('%s'), null);" % (phone_number_inpt, datetime.now(), datetime.now())
+			try:
+				conn.execute(text(insert_query))
+				conn.commit()
+				get_newly_inserted_recd_query = "SELECT * FROM contact WHERE phone_number = ('%s');" % (phone_number_inpt)
+				resp = conn.execute(text(get_newly_inserted_recd_query))
+				conn.commit()
+				resp_row = resp.fetchone()
+				consolidated_resp["contact"]["primaryContactId"] = resp_row[0]
+				consolidated_resp["contact"]["phoneNumbers"].append(resp_row[1])
+			except SQLAlchemyError as e:
+				print(f"SQLAlchemyError: {e}")
+			close_db_connection()
+
+ 		# only email is unseen, create a secondary record
+ 		if inpt_email_not_present_flag == True and inpt_phone_number_not_present_flag == False:
+ 			
+
+ 		# only phone_number is unseen, create a secondary record
+
 		consolidated_resp_json = json.dumps(consolidated_resp, indent=4)
 		return consolidated_resp_json
