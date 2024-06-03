@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
 from flask import g
 import os
 
@@ -12,8 +13,11 @@ def get_db_connection():
     connection_string = f'mysql+mysqlconnector://' + username + \
         ':' + password + '@' + hostname + '/' + database_name
     # create engine
-    engine = create_engine(connection_string)
-
+    try:
+        engine = create_engine(connection_string)
+    except SQLAlchemyError:
+        print("SQLAlchemyError")
+        
     if 'db_connection' not in g:
         # create connection
         g.db_connection = engine.connect()
