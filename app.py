@@ -3,6 +3,7 @@ from db import get_db_connection, close_db_connection
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 import json
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -46,6 +47,7 @@ def identity_handler():
 							consolidated_resp["contact"]["primaryContactId"] = contact_id
 							rows_with_same_linked_id_query = "SELECT * FROM contact WHERE linked_id = (%s);" % (contact_id)
 							rows_with_same_linked_id_resp = conn.execute(text(rows_with_same_linked_id_query))
+							conn.commit()
 							rows_with_same_linked_id_resp_records = rows_with_same_linked_id_resp.fetchall()
 							for recd in rows_with_same_linked_id_resp_records:
 								recd_contact_id = recd[0]
@@ -64,6 +66,7 @@ def identity_handler():
 								consolidated_resp["contact"]["primaryContactId"] = linked_id
 								get_primary_recd_query = "SELECT * FROM contact WHERE id = (%s);" % (linked_id)
 								get_primary_recd_resp = conn.execute(text(get_primary_recd_query))
+								conn.commit()
 								get_primary_recd_resp_row = get_primary_recd_resp.fetchone()
 								pr_phone_number = get_primary_recd_resp_row[1]
 								pr_email = get_primary_recd_resp_row[2]
@@ -101,6 +104,7 @@ def identity_handler():
 							consolidated_resp["contact"]["primaryContactId"] = contact_id
 							rows_with_same_linked_id_query = "SELECT * FROM contact WHERE linked_id = (%s);" % (contact_id)
 							rows_with_same_linked_id_resp = conn.execute(text(rows_with_same_linked_id_query))
+							conn.commit()
 							rows_with_same_linked_id_resp_records = rows_with_same_linked_id_resp.fetchall()
 							for recd in rows_with_same_linked_id_resp_records:
 								recd_contact_id = recd[0]
@@ -119,6 +123,7 @@ def identity_handler():
 								consolidated_resp["contact"]["primaryContactId"] = linked_id
 								get_primary_recd_query = "SELECT * FROM contact WHERE id = (%s);" % (linked_id)
 								get_primary_recd_resp = conn.execute(text(get_primary_recd_query))
+								conn.commit()
 								get_primary_recd_resp_row = get_primary_recd_resp.fetchone()
 								pr_phone_number = get_primary_recd_resp_row[1]
 								pr_email = get_primary_recd_resp_row[2]
@@ -137,8 +142,24 @@ def identity_handler():
 				print(f"SQLAlchemyError: {e}")
 			close_db_connection()
 
-		# both email and phone_number not present in the database
+		# both email and phone_number not present in the database, create a new primary record
 		if inpt_email_not_present_flag == True and inpt_phone_number_not_present_flag == True:
-
+			# insert new record
+			conn = get_db_connection()
+			insert_query = "INSERT INTO contact(phone_number, email, linked_id, link_precedence, created_at, updated_at, deleted_at) VALUES(('%s'), ('%s'), null, 'primary', ('%s'), ('%s'), null);" % (phone_number_inpt, email_inpt, datetime.now(), datetime.now())
+			try:
+				conn.execute(text(insert_query))
+				conn.commit()
+				get_newly_inserted_recd_query = "SELECT * FROM contact WHERE email = ('%s');" % (email_inpt)
+				resp = conn.execute(text(get_newly_inserted_recd_query))
+				conn.commit()
+				resp_row = resp.fetchone()
+				consolidated_resp["contact"]["primaryContactId"] = resp_row[0]
+				consolidated_resp["contact"]["phoneNumbers"].append(resp_row[1])
+				consolidated_resp["contact"]["emails"].append(resp_row[2])
+			except SQLAlchemyError as e:
+				print(f"SQLAlchemyError: {e}")
+			close_db_connection()
+ 
 		consolidated_resp_json = json.dumps(consolidated_resp, indent=4)
 		return consolidated_resp_json
