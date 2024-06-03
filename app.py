@@ -28,6 +28,67 @@ def identity_handler():
 		inpt_email_not_present_flag = False
 		inpt_phone_number_not_present_flag = False
 
+		# process of converting primary records into secondary, if required
+		if email_inpt != "null" and phone_number_inpt != "null":
+			conn = get_db_connection()
+			try:
+				# find the primary record ids associated with the email and phone number
+				email_primary_recd_id = None
+				phone_number_primary_recd_id = None
+				get_email_primary_recd_id_query = "SELECT * FROM contact WHERE email = ('%s') LIMIT 1;" % (email_inpt)
+				get_phone_number_primary_recd_id_query = "SELECT * FROM contact WHERE phone_number = ('%s') LIMIT 1;" % (phone_number_inpt)
+				get_email_primary_recd_id_resp =  conn.execute(text(get_email_primary_recd_id_query))
+				conn.commit()
+				get_phone_number_primary_recd_id_resp =  conn.execute(text(get_phone_number_primary_recd_id_query))
+				conn.commit()
+				email_recd = get_email_primary_recd_id_resp.fetchone()
+				phone_number_recd = get_phone_number_primary_recd_id_resp.fetchone()
+				if email_recd is not None and phone_number_recd is not None:
+					email_recd_link_prcd = email_recd[4]
+					phone_number_link_prcd = phone_number_recd[4]
+					if email_recd_link_prcd == "primary":
+						email_primary_recd_id = email_recd[0]
+					elif email_recd_link_prcd == "secondary":
+						email_primary_recd_id = email_recd[3]
+					if phone_number_link_prcd == "primary":
+						phone_number_primary_recd_id = phone_number_recd[0]
+					elif phone_number_link_prcd == "secondary":
+						phone_number_primary_recd_id = phone_number_recd[3]
+				
+				# check if both the primary ids are same or not
+				if email_primary_recd_id != phone_number_primary_recd_id:
+					# find the counts of second. records associated with email & phone_number
+					find_secondary_recd_count_email_query = "SELECT COUNT(*) FROM contact WHERE linked_id = (%s);" % (email_primary_recd_id)
+					count_resp = conn.execute(text(find_secondary_recd_count_email_query))
+					conn.commit()
+					email_sec_recd_cnt = count_resp.fetchone()
+					find_secondary_recd_count_phone_number_query = "SELECT COUNT(*) FROM contact WHERE linked_id = (%s);" % (phone_number_primary_recd_id)
+					count_resp = conn.execute(text(find_secondary_recd_count_phone_number_query))
+					conn.commit()
+					phone_number_sec_recd_cnt = count_resp.fetchone()
+					# do processing for smaller number of records			
+					if email_sec_recd_cnt <= phone_number_sec_recd_cnt:
+						# make all secondary records point to new primary record by updating linked_id
+						update_secnd_recd_query = "UPDATE contact SET linked_id = (%s) WHERE linked_id = (%s);" % (phone_number_primary_recd_id, email_primary_recd_id)
+						conn.execute(text(update_secnd_recd_query))
+						conn.commit()
+						# convert primary_record to secondary_record
+						convert_primary_recd_query = "UPDATE contact SET linked_id = (%s), link_precedence = 'secondary' WHERE id = (%s)" % (phone_number_primary_recd_id, email_primary_recd_id)
+						conn.execute(text(convert_primary_recd_query))
+						conn.commit()	
+					else:
+						# make all secondary records point to new primary record by updating linked_id
+						update_secnd_recd_query = "UPDATE contact SET linked_id = (%s) WHERE linked_id = (%s);" % (email_primary_recd_id, phone_number_primary_recd_id)
+						conn.execute(text(update_secnd_recd_query))
+						conn.commit()
+						# convert primary_record to secondary_record
+						convert_primary_recd_query = "UPDATE contact SET linked_id = (%s), link_precedence = 'secondary' WHERE id = (%s)" % (email_primary_recd_id, phone_number_primary_recd_id)
+						conn.execute(text(convert_primary_recd_query))
+						conn.commit()
+			except SQLAlchemyError as e:
+				print(f"SQLAlchemyError: {e}")
+			close_db_connection()
+
 		# process email input
 		if email_inpt != "null":
 			conn = get_db_connection()
